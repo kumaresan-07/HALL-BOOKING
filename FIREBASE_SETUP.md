@@ -68,7 +68,8 @@ This guide will help you set up Firebase Realtime Database for your Venue Bookin
    - Click **"Create Database"** button
    
 3. **Choose Location**
-   - Select your region (e.g., `United States`, `Europe`, `Asia`)
+   - Select **Singapore (asia-southeast1)** ✅
+   - **Best choice for India/Asia region** - Fastest performance!
    - Click **Next**
 
 4. **Security Rules**
@@ -79,7 +80,8 @@ This guide will help you set up Firebase Realtime Database for your Venue Bookin
 
 5. **Database Created!**
    - You'll see an empty database with URL like:
-   - `https://your-project-default-rtdb.firebaseio.com/`
+   - `https://your-project-name-default-rtdb.asia-southeast1.firebasedatabase.app/`
+   - **Notice:** `.asia-southeast1` in the URL - this is correct for Singapore location!
 
 ---
 
@@ -105,13 +107,15 @@ This guide will help you set up Firebase Realtime Database for your Venue Bookin
    const firebaseConfig = {
        apiKey: "AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXXX",
        authDomain: "venue-booking-abc123.firebaseapp.com",
-       databaseURL: "https://venue-booking-abc123-default-rtdb.firebaseio.com",
+       databaseURL: "https://venue-booking-abc123-default-rtdb.asia-southeast1.firebasedatabase.app",  // ← For Singapore location
        projectId: "venue-booking-abc123",
        storageBucket: "venue-booking-abc123.appspot.com",
        messagingSenderId: "123456789012",
        appId: "1:123456789012:web:abcdef123456"
    };
    ```
+   
+   > 💡 **Note:** Since you chose Singapore location, your `databaseURL` will contain `.asia-southeast1.firebasedatabase.app` - this is correct!
 
 4. **Save the file**
 
