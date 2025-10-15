@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Venue Booking Management System</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Login Page -->
+    <div id="loginPage" class="page active">
+        <div class="login-container animate-fade-in">
+            <div class="logo-container">
+                <div class="logo">🏛️</div>
+                <h1 class="gradient-text">Venue Booking System</h1>
+                <p class="subtitle">Welcome to Hall Booking Portal</p>
+            </div>
+            
+            <div class="login-box">
+                <h2>Login to Continue</h2>
+                
+                <div class="credentials-hint">
+                    <p><strong>📝 Demo Credentials:</strong></p>
+                    <p>Admin: advisor/adv123, hod/hod123</p>
+                    <p>Student: student1/stu123</p>
+                </div>
+
+                <form id="loginForm">
+                    <div class="input-group">
+                        <label>👤 Username</label>
+                        <input type="text" id="username" placeholder="Enter username" required>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label>🔒 Password</label>
+                        <input type="password" id="password" placeholder="Enter password" required>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">
+                        <span>Login</span>
+                        <span class="btn-icon">→</span>
+                    </button>
+                </form>
+                
+                <div id="loginError" class="error-message"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Dashboard -->
+    <div id="adminDashboard" class="page">
+        <nav class="navbar">
+            <div class="nav-brand">
+                <span class="logo-small">🏛️</span>
+                <span>Admin Dashboard</span>
+            </div>
+            <div class="nav-user">
+                <span id="adminName" class="user-name"></span>
+                <button onclick="logout()" class="btn btn-logout">🚪 Logout</button>
+            </div>
+        </nav>
+
+        <div class="dashboard-container">
+            <div class="sidebar">
+                <div class="menu-item active" onclick="showAdminSection('pending')">
+                    <span class="menu-icon">📋</span>
+                    <span>Pending Requests</span>
+                    <span id="pendingCount" class="badge">0</span>
+                </div>
+                <div class="menu-item" onclick="showAdminSection('approved')">
+                    <span class="menu-icon">✅</span>
+                    <span>Approved Bookings</span>
+                </div>
+                <div class="menu-item" onclick="showAdminSection('rejected')">
+                    <span class="menu-icon">❌</span>
+                    <span>Rejected Bookings</span>
+                </div>
+                <div class="menu-item" onclick="showAdminSection('venues')">
+                    <span class="menu-icon">🏛️</span>
+                    <span>All Venues</span>
+                </div>
+                <div class="menu-item" onclick="showAdminSection('schedule')">
+                    <span class="menu-icon">📅</span>
+                    <span>Venue Schedule</span>
+                </div>
+            </div>
+
+            <div class="main-content">
+                <!-- Pending Requests Section -->
+                <div id="pendingSection" class="content-section active">
+                    <h2 class="section-title">📋 Pending Booking Requests</h2>
+                    <div id="pendingRequests" class="requests-grid"></div>
+                </div>
+
+                <!-- Approved Bookings Section -->
+                <div id="approvedSection" class="content-section">
+                    <h2 class="section-title">✅ Approved Bookings</h2>
+                    <div id="approvedRequests" class="requests-grid"></div>
+                </div>
+
+                <!-- Rejected Bookings Section -->
+                <div id="rejectedSection" class="content-section">
+                    <h2 class="section-title">❌ Rejected Bookings</h2>
+                    <div id="rejectedRequests" class="requests-grid"></div>
+                </div>
+
+                <!-- Venues Section -->
+                <div id="venuesSection" class="content-section">
+                    <h2 class="section-title">🏛️ All Venues</h2>
+                    <div id="venuesList" class="venues-grid"></div>
+                </div>
+
+                <!-- Schedule Section -->
+                <div id="scheduleSection" class="content-section">
+                    <h2 class="section-title">📅 Venue Schedule</h2>
+                    <div class="input-group">
+                        <label>Select Venue</label>
+                        <select id="scheduleVenue" onchange="showVenueSchedule()">
+                            <option value="">Choose a venue...</option>
+                        </select>
+                    </div>
+                    <div id="scheduleDisplay" class="schedule-container"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Student Dashboard -->
+    <div id="studentDashboard" class="page">
+        <nav class="navbar">
+            <div class="nav-brand">
+                <span class="logo-small">🏛️</span>
+                <span>Student Dashboard</span>
+            </div>
+            <div class="nav-user">
+                <span id="studentName" class="user-name"></span>
+                <button onclick="logout()" class="btn btn-logout">🚪 Logout</button>
+            </div>
+        </nav>
+
+        <div class="dashboard-container">
+            <div class="sidebar">
+                <div class="menu-item active" onclick="showStudentSection('venues')">
+                    <span class="menu-icon">🏛️</span>
+                    <span>Available Venues</span>
+                </div>
+                <div class="menu-item" onclick="showStudentSection('newBooking')">
+                    <span class="menu-icon">📝</span>
+                    <span>New Booking</span>
+                </div>
+                <div class="menu-item" onclick="showStudentSection('myRequests')">
+                    <span class="menu-icon">📊</span>
+                    <span>My Requests</span>
+                </div>
+                <div class="menu-item" onclick="showStudentSection('availability')">
+                    <span class="menu-icon">📅</span>
+                    <span>Check Availability</span>
+                </div>
+            </div>
+
+            <div class="main-content">
+                <!-- Venues List Section -->
+                <div id="studentVenuesSection" class="content-section active">
+                    <h2 class="section-title">🏛️ Available Venues</h2>
+                    <div id="studentVenuesList" class="venues-grid"></div>
+                </div>
+
+                <!-- New Booking Section -->
+                <div id="newBookingSection" class="content-section">
+                    <h2 class="section-title">📝 Submit New Booking Request</h2>
+                    <div class="booking-form-container">
+                        <form id="bookingForm">
+                            <div class="input-group">
+                                <label>🏛️ Select Venue</label>
+                                <select id="venueSelect" required>
+                                    <option value="">Choose a venue...</option>
+                                </select>
+                            </div>
+
+                            <div class="input-group">
+                                <label>📝 Event Name</label>
+                                <input type="text" id="eventName" placeholder="e.g., Annual Tech Fest" required>
+                            </div>
+
+                            <div class="input-group">
+                                <label>📄 Event Description</label>
+                                <textarea id="eventDescription" rows="3" placeholder="Describe your event..." required></textarea>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="input-group">
+                                    <label>📅 Event Date</label>
+                                    <input type="date" id="eventDate" required>
+                                </div>
+
+                                <div class="input-group">
+                                    <label>🕐 Start Time</label>
+                                    <input type="time" id="startTime" required>
+                                </div>
+
+                                <div class="input-group">
+                                    <label>🕐 End Time</label>
+                                    <input type="time" id="endTime" required>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary btn-large">
+                                <span>Submit Booking Request</span>
+                                <span class="btn-icon">✓</span>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- My Requests Section -->
+                <div id="myRequestsSection" class="content-section">
+                    <h2 class="section-title">📊 My Booking Requests</h2>
+                    <div id="myRequestsList" class="requests-grid"></div>
+                </div>
+
+                <!-- Availability Section -->
+                <div id="availabilitySection" class="content-section">
+                    <h2 class="section-title">📅 Check Venue Availability</h2>
+                    <div class="input-group">
+                        <label>Select Date</label>
+                        <input type="date" id="availabilityDate" onchange="checkAvailability()">
+                    </div>
+                    <div id="availabilityDisplay" class="availability-container"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Approval Modal -->
+    <div id="approvalModal" class="modal">
+        <div class="modal-content animate-scale-in">
+            <div class="modal-header">
+                <h3 id="modalTitle">Review Booking Request</h3>
+                <span class="close" onclick="closeModal()">&times;</span>
+            </div>
+            <div class="modal-body" id="modalBody"></div>
+            <div class="modal-footer">
+                <button onclick="closeModal()" class="btn btn-secondary">Cancel</button>
+                <button id="approveBtn" class="btn btn-success">✅ Approve</button>
+                <button id="rejectBtn" class="btn btn-danger">❌ Reject</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success/Error Toast Notification -->
+    <div id="toast" class="toast"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>
