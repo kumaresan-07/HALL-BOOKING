@@ -2,6 +2,100 @@
 let currentUser = null;
 let bookingRequests = [];
 let requestCounter = 1000;
+let useFirebase = false; // Will be set to true when Firebase is configured
+
+// Firebase helper functions
+function initializeFirebase() {
+    if (typeof window.firebaseDb !== 'undefined') {
+        useFirebase = true;
+        console.log('✅ Firebase initialized successfully');
+        loadDataFromFirebase();
+    } else {
+        console.log('⚠️ Firebase not configured, using localStorage');
+        useFirebase = false;
+    }
+}
+
+// Load data from Firebase
+function loadDataFromFirebase() {
+    const db = window.firebaseDb;
+    const ref = window.firebaseRef;
+    const onValue = window.firebaseOnValue;
+    
+    // Listen for booking requests changes
+    const requestsRef = ref(db, 'bookingRequests');
+    onValue(requestsRef, (snapshot) => {
+        if (snapshot.exists()) {
+            const data = snapshot.val();
+            bookingRequests = Object.keys(data).map(key => ({
+                firebaseKey: key,
+                ...data[key]
+            }));
+        } else {
+            bookingRequests = [];
+        }
+        
+        // Update UI if user is logged in
+        if (currentUser) {
+            if (currentUser.role === 'ADMIN') {
+                updatePendingCount();
+                loadPendingRequests();
+                loadApprovedRequests();
+                loadRejectedRequests();
+            } else {
+                loadMyRequests();
+            }
+        }
+    });
+    
+    // Get request counter
+    const counterRef = ref(db, 'requestCounter');
+    onValue(counterRef, (snapshot) => {
+        if (snapshot.exists()) {
+            requestCounter = snapshot.val();
+        }
+    });
+}
+
+// Save booking request to Firebase
+async function saveBookingToFirebase(request) {
+    const db = window.firebaseDb;
+    const ref = window.firebaseRef;
+    const push = window.firebasePush;
+    const set = window.firebaseSet;
+    
+    try {
+        // Save the booking request
+        const requestsRef = ref(db, 'bookingRequests');
+        const newRequestRef = push(requestsRef);
+        await set(newRequestRef, request);
+        
+        // Update counter
+        const counterRef = ref(db, 'requestCounter');
+        await set(counterRef, requestCounter);
+        
+        return true;
+    } catch (error) {
+        console.error('Error saving to Firebase:', error);
+        return false;
+    }
+}
+
+// Update booking request in Firebase
+async function updateBookingInFirebase(firebaseKey, updates) {
+    const db = window.firebaseDb;
+    const ref = window.firebaseRef;
+    const update = window.firebaseUpdate;
+    
+    try {
+        const requestRef = ref(db, `bookingRequests/${firebaseKey}`);
+        await update(requestRef, updates);
+        return true;
+    } catch (error) {
+        console.error('Error updating Firebase:', error);
+        return false;
+    }
+}
 
 // User Database
 const users = {
@@ -24,8 +118,13 @@ const venues = {
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
-    // Load saved data from localStorage
-    loadData();
+    // Initialize Firebase or localStorage
+    setTimeout(() => {
+        initializeFirebase();
+        if (!useFirebase) {
+            loadData(); // Fallback to localStorage
+        }
+    }, 1000); // Wait for Firebase to load
     
     // Setup event listeners
     document.getElementById('loginForm').addEventListener('submit', handleLogin);
@@ -330,17 +429,35 @@ function processApproval(status) {
     request.approvedBy = `${currentUser.fullName} (${currentUser.designation})`;
     request.remarks = remarks;
     
-    saveData();
-    closeModal();
-    
-    // Reload dashboard
-    loadAdminDashboard();
-    
-    const message = status === 'APPROVED' ? 
-        `✅ Booking request #${currentRequestId} has been approved!` :
-        `❌ Booking request #${currentRequestId} has been rejected!`;
-    
-    showToast(message, status === 'APPROVED' ? 'success' : 'error');
+    // Save to database
+    if (useFirebase) {
+        const updates = {
+            status: status,
+            approvedBy: request.approvedBy,
+            remarks: remarks
+        };
+        updateBookingInFirebase(request.firebaseKey, updates).then(success => {
+            if (success) {
+                closeModal();
+                const message = status === 'APPROVED' ? 
+                    `✅ Booking request #${currentRequestId} has been approved!` :
+                    `❌ Booking request #${currentRequestId} has been rejected!`;
+                showToast(message, status === 'APPROVED' ? 'success' : 'error');
+            } else {
+                showToast('Error updating request. Please try again.', 'error');
+            }
+        });
+    } else {
+        saveData();
+        closeModal();
+        loadAdminDashboard();
+        
+        const message = status === 'APPROVED' ? 
+            `✅ Booking request #${currentRequestId} has been approved!` :
+            `❌ Booking request #${currentRequestId} has been rejected!`;
+        
+        showToast(message, status === 'APPROVED' ? 'success' : 'error');
+    }
 }
 
 // Student Dashboard Functions
@@ -475,13 +592,23 @@ function handleBookingSubmit(e) {
         remarks: ''
     };
     
-    bookingRequests.push(request);
-    saveData();
-    
-    // Reset form
-    document.getElementById('bookingForm').reset();
-    
-    showToast(`✅ Booking request submitted successfully! Request ID: #${request.requestId}`, 'success');
+    // Save to database
+    if (useFirebase) {
+        saveBookingToFirebase(request).then(success => {
+            if (success) {
+                document.getElementById('bookingForm').reset();
+                showToast(`✅ Booking request submitted successfully! Request ID: #${request.requestId}`, 'success');
+            } else {
+                showToast('Error submitting request. Please try again.', 'error');
+                requestCounter--; // Rollback counter
+            }
+        });
+    } else {
+        bookingRequests.push(request);
+        saveData();
+        document.getElementById('bookingForm').reset();
+        showToast(`✅ Booking request submitted successfully! Request ID: #${request.requestId}`, 'success');
+    }
 }
 
 function checkVenueAvailable(venueName, eventDate, startTime, endTime) {
