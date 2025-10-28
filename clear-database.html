@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clear Database - Admin Tool</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .admin-box {
+            background: white;
+            color: #333;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #ef4444;
+            margin-bottom: 10px;
+        }
+        .warning {
+            background: #fee2e2;
+            border-left: 4px solid #ef4444;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 8px;
+            color: #991b1b;
+        }
+        .info {
+            background: #dbeafe;
+            border-left: 4px solid #3b82f6;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 8px;
+            color: #1e40af;
+        }
+        .success {
+            background: #d1fae5;
+            border-left: 4px solid #10b981;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 8px;
+            color: #065f46;
+        }
+        button {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            margin: 10px 5px;
+            transition: all 0.3s ease;
+        }
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+        }
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(239, 68, 68, 0.4);
+        }
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #334155;
+        }
+        .btn-secondary:hover {
+            background: #cbd5e1;
+        }
+        #status {
+            margin-top: 20px;
+            font-weight: bold;
+        }
+        pre {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-box">
+        <h1>⚠️ Database Admin Tool - Clear All Data</h1>
+        
+        <div class="warning">
+            <strong>⚠️ WARNING: DESTRUCTIVE ACTION!</strong><br>
+            This will permanently delete ALL booking requests from the database.<br>
+            This action CANNOT be undone!
+        </div>
+
+        <div class="info">
+            <strong>ℹ️ What will be deleted:</strong>
+            <ul>
+                <li>All pending booking requests</li>
+                <li>All approved booking requests</li>
+                <li>All rejected booking requests</li>
+                <li>Request counter will be reset to 1000</li>
+            </ul>
+        </div>
+
+        <div id="status"></div>
+
+        <div style="margin-top: 30px;">
+            <button class="btn-danger" onclick="clearAllData()">
+                🗑️ Clear All Booking Requests
+            </button>
+            <button class="btn-secondary" onclick="location.href='index.html'">
+                ← Back to Main App
+            </button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getDatabase, ref, remove, set } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAd7Egr48ObkgCa1K903tKqerMyuAi3CkA",
+            authDomain: "venue-booking-f6deb.firebaseapp.com",
+            databaseURL: "https://venue-booking-f6deb-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "venue-booking-f6deb",
+            storageBucket: "venue-booking-f6deb.firebasestorage.app",
+            messagingSenderId: "225323845513",
+            appId: "1:225323845513:web:507ae4aac39d654f2d8358",
+            measurementId: "G-QZM3C5YNN6"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        window.clearAllData = async function() {
+            const statusDiv = document.getElementById('status');
+            
+            const confirmed = confirm(
+                "⚠️ FINAL WARNING ⚠️\n\n" +
+                "Are you absolutely sure you want to delete ALL booking requests?\n\n" +
+                "This will:\n" +
+                "✗ Delete all pending requests\n" +
+                "✗ Delete all approved bookings\n" +
+                "✗ Delete all rejected bookings\n" +
+                "✗ Reset the counter\n\n" +
+                "This action CANNOT be undone!\n\n" +
+                "Click OK to proceed, or Cancel to go back."
+            );
+
+            if (!confirmed) {
+                statusDiv.innerHTML = `
+                    <div class="info">
+                        ℹ️ Operation cancelled. No data was deleted.
+                    </div>
+                `;
+                return;
+            }
+
+            statusDiv.innerHTML = `
+                <div class="info">
+                    ⏳ Clearing database... Please wait...
+                </div>
+            `;
+
+            try {
+                // Delete all booking requests
+                const requestsRef = ref(db, 'bookingRequests');
+                await remove(requestsRef);
+
+                // Reset counter to 1000
+                const counterRef = ref(db, 'requestCounter');
+                await set(counterRef, 1000);
+
+                statusDiv.innerHTML = `
+                    <div class="success">
+                        <strong>✅ Success!</strong><br>
+                        All booking requests have been deleted.<br>
+                        Request counter has been reset to 1000.<br>
+                        <br>
+                        The database is now empty and ready for new bookings.
+                    </div>
+                `;
+
+                console.log('Database cleared successfully');
+            } catch (error) {
+                statusDiv.innerHTML = `
+                    <div class="warning">
+                        <strong>❌ Error!</strong><br>
+                        Failed to clear database: ${error.message}<br>
+                        <br>
+                        Please check:
+                        <ul>
+                            <li>Your internet connection</li>
+                            <li>Firebase database rules allow write access</li>
+                            <li>You have the correct permissions</li>
+                        </ul>
+                    </div>
+                `;
+                console.error('Error clearing database:', error);
+            }
+        };
+    </script>
+</body>
+</html>
